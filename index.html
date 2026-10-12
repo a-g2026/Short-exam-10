@@ -1058,6 +1058,98 @@ function printModel(){
   window.print();
 }
 
+
+// ---------- updated point 4: three quantum numbers (n, ℓ, mℓ) for the last sub-level ----------
+(function(){
+  const upd = (m, q, a) => {
+    const it = MODELS[m-1].items.find(x => x.t === 'four');
+    if (it){ it.q = q; it.a = a; }
+  };
+  upd(1,  'اكتب قيم أعداد الكم (n ، ℓ ، mℓ) لتحت المستوى الأخير في عنصر P (15)', ['3','1','+1']);
+  upd(2,  'اكتب قيم أعداد الكم (n ، ℓ ، mℓ) لتحت المستوى الأخير في عنصر S (16)', ['3','1','-1']);
+  upd(3,  'اكتب قيم أعداد الكم (n ، ℓ ، mℓ) لتحت المستوى الأخير لعنصر Sc (21)', ['3','2','-2']);
+  upd(4,  'اكتب قيم أعداد الكم (n ، ℓ ، mℓ) لتحت المستوى الأخير في عنصر Al (13)', ['3','1','-1']);
+  upd(7,  'اكتب قيم أعداد الكم (n ، ℓ ، mℓ) لتحت المستوى الأخير لعنصر Al (13)', ['3','1','-1']);
+  upd(8,  'اكتب قيم أعداد الكم (n ، ℓ ، mℓ) لتحت المستوى الأخير في عنصر Al (13)', ['3','1','-1']);
+  upd(9,  'اكتب قيم أعداد الكم (n ، ℓ ، mℓ) لتحت المستوى الأخير لعنصر P (15)', ['3','1','+1']);
+  upd(10, 'اكتب قيم أعداد الكم (n ، ℓ ، mℓ) لتحت المستوى الأخير لعنصر Sc (21)', ['3','2','-2']);
+})();
+function qLabels(it){ return it.a.length === 3 ? ['n','ℓ','mℓ'] : ['n','ℓ','mℓ','ms']; }
+function fourCorrect(it, u){ return !!u && it.a.every((x, k) => norm(u[k]) === norm(x)); }
+function isAnswered(it, u){
+  switch (it.t){
+    case 'mcq': case 'tf': return u !== undefined;
+    case 'fill': case 'cfg': return String(u || '').trim() !== '';
+    case 'four': return Array.isArray(u) && it.a.every((_, k) => String(u[k] || '').trim() !== '');
+    case 'table': return it.rows.every((r, ri) => r.a.every((_, ci) => String((u && u[ri+'_'+ci]) || '').trim() !== ''));
+    case 'orb': return Array.isArray(u) && u.every(sub => sub.some(x => x));
+    case 'essay': return String(u || '').trim().length > 0;
+    default: return true;
+  }
+}
+function fourUI(it, ii){
+  const labs = qLabels(it);
+  if (!Array.isArray(ans[ii]) || ans[ii].length !== labs.length) ans[ii] = labs.map(() => '');
+  const w = document.createElement('div'); w.className = 'four';
+  labs.forEach((lb, k) => {
+    const l = document.createElement('label'); l.innerHTML = lb + '<input type="text">';
+    const inp = l.querySelector('input'); inp.value = ans[ii][k] || ''; inp.setAttribute('lang','en');
+    inp.oninput = e => { const v = latin(e.target.value); e.target.value = v; ans[ii][k] = v; };
+    inp.onkeydown = e => { if (e.key === 'Enter') nextQ(); };
+    w.appendChild(l);
+  });
+  return w;
+}
+function answerText(it, u){
+  if (u === undefined || u === '') return '—';
+  if (it.t === 'mcq') return it.opts[u] || '—';
+  if (it.t === 'tf') return u ? 'صح' : 'خطأ';
+  if (it.t === 'four') return qLabels(it).map((l,k)=>l+' = '+(u[k]||'—')).join('، ');
+  if (it.t === 'orb') return it.a.map((s,si)=>it.names[si]+': '+u[si].map(x=>x||'□').join(' ')).join(' | ');
+  if (it.t === 'table') return it.rows.map((r,ri)=>r.label+': '+r.a.map((_,ci)=>(u[ri+'_'+ci]||'—')).join(' / ')).join(' | ');
+  return String(u);
+}
+function correctText(it){
+  if (it.t === 'mcq') return it.opts[it.a];
+  if (it.t === 'tf') return it.a ? 'صح' : 'خطأ';
+  if (it.t === 'fill') return it.a[0];
+  if (it.t === 'cfg') return it.a;
+  if (it.t === 'four') return qLabels(it).map((l,k)=>l+' = '+it.a[k]).join('، ');
+  if (it.t === 'orb') return it.a.map((s,si)=>it.names[si]+': '+s.map(x=>x||'□').join(' ')).join(' | ');
+  if (it.t === 'table') return it.rows.map(r=>r.label+': '+r.a.join(' / ')).join(' | ');
+  return '';
+}
+
+
+// ---------- mℓ: the last sub-level has all its possible values (p: -1,0,+1 ; d: -2..+2) ----------
+(function(){
+  const upd = (m, a) => { const it = MODELS[m-1].items.find(x => x.t === 'four'); if (it) it.a = a; };
+  upd(1,  ['3','1','-1,0,+1']);
+  upd(2,  ['3','1','-1,0,+1']);
+  upd(3,  ['3','2','-2,-1,0,+1,+2']);
+  upd(4,  ['3','1','-1,0,+1']);
+  upd(7,  ['3','1','-1,0,+1']);
+  upd(8,  ['3','1','-1,0,+1']);
+  upd(9,  ['3','1','-1,0,+1']);
+  upd(10, ['3','2','-2,-1,0,+1,+2']);
+})();
+function mlSet(s){
+  const nums = (String(s || '').replace(/−/g,'-').match(/[+-]?\d+/g) || []).map(Number);
+  return nums.sort((a,b)=>a-b).join(',');
+}
+function fourCorrect(it, u){
+  if (!u) return false;
+  return it.a.every((x, k) => (k === 2 ? mlSet(u[k]) === mlSet(x) : norm(u[k]) === norm(x)));
+}
+
+
+// ---------- mℓ answer: any separator (comma, dot, Arabic و or ،, spaces) is fine ----------
+function mlSet(s){
+  let v = latin(String(s || '')).replace(/[−–—]/g, '-').replace(/([+-])\s+(\d)/g, '$1$2');
+  const nums = (v.match(/[+-]?\d+/g) || []).map(Number);
+  return nums.sort((a, b) => a - b).join(',');
+}
+
 buildHome();
 </script>
 </body>
